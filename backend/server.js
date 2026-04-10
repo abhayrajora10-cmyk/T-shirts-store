@@ -49,9 +49,30 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // ==================== CORS ====================
+const corsOriginValidator = (origin, callback) => {
+  if (!origin) {
+    return callback(null, true);
+  }
+
+  const allowedOrigins = [
+    FRONTEND_URL,
+    'http://localhost:5173',
+    'http://localhost:3000',
+  ];
+
+  const isVercelPreview = origin.includes('.vercel.app');
+  const isAllowedOrigin = allowedOrigins.includes(origin);
+
+  if (isAllowedOrigin || isVercelPreview) {
+    callback(null, true);
+  } else {
+    callback(new Error('Not allowed by CORS'));
+  }
+};
+
 app.use(
   cors({
-    origin: FRONTEND_URL,
+    origin: corsOriginValidator,
     credentials: true,
   })
 );

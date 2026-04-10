@@ -15,6 +15,19 @@ import orderRoutes from './routes/orderRoutes.js';
 
 dotenv.config();
 
+const getRequiredEnv = (name) => {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+};
+
+const FRONTEND_URL = getRequiredEnv('FRONTEND_URL');
+const PORT = Number(getRequiredEnv('PORT'));
+const RATE_LIMIT_WINDOW_MS = Number(getRequiredEnv('RATE_LIMIT_WINDOW_MS'));
+const RATE_LIMIT_MAX_REQUESTS = Number(getRequiredEnv('RATE_LIMIT_MAX_REQUESTS'));
+
 const app = express();
 
 // Connect to database
@@ -24,8 +37,8 @@ connectDB();
 app.use(helmet());
 
 const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000,
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  max: RATE_LIMIT_MAX_REQUESTS,
   message: 'Too many requests from this IP, please try again later.',
 });
 
@@ -38,7 +51,7 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // ==================== CORS ====================
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+    origin: FRONTEND_URL,
     credentials: true,
   })
 );
@@ -71,8 +84,6 @@ app.use('*', (req, res) => {
 app.use(errorHandler);
 
 // ==================== SERVER START ====================
-const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV}`);
